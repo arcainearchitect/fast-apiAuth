@@ -110,3 +110,101 @@ class AppSettings(BaseSettings):
     version:str=Field(default="0.1.0", description="Application version")
 
     # Environment configuration
+    environment:Literal["development", "testing", "production"]=Field(
+        default="development",
+        description="Application preferred environment",
+    )
+
+    # API configuration
+    api_v1_prefix:str=Field(default="/api/v1", description="API v1 path prefix")
+    docs_url:str | None=Field(default="/docs", description="OpenAPI docs URL")
+    redoc_url:str | None=Field(default="/redoc", description="ReDoc URL")
+    openapi_url:str | None=Field(default="/openapi.json", description="OpenAPI JSON URL")
+
+    # Server configuration
+    host:str=Field(default="127.0.0.1", description="Server host")
+    port:int=Field(default=8000, description="Server port")
+    reload:bool=Field(default=True, description="Auto-reload on code changes")
+
+    # CORS configurations
+    allowed_origins:list[str]=Field(
+        default=["http://localhost:3000"],
+        description="Allowed CORS origins",
+    )
+    allowed_methods:list[str]=Field(
+        default=["GET", "POST", "PUT", "DELETE"],
+        description="Allowed CORS methods",
+    )
+    allowed_headers:list[str]=Field(
+        default=["*"],
+        description="Allowed CORS headers",
+    )
+
+    # Logging configuration
+    log_level:Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]=Field(
+        default="INFO",
+        description="Logging level",
+    )
+    log_format:Literal["json", "console"]=Field(
+        default="console",
+        description="Log format",
+    )
+
+    @validator("environment")
+    def validate_environment(cls, v:str)->str:
+        """Adjust settings based on environment."""
+        return v.lower()
+
+    @validator("docs_url", "redoc_url", "openai_url")
+    def disable_docs_in_production(cls, v:str | None, values:dict)->str | None:
+        """Disables API documentation in production."""
+        if values.get("environment")=="production":
+            return None
+        return v
+
+    class Config:
+        env_prefix="APP_"
+        case_sensitive=False
+
+
+class Settings(BaseSettings):
+    """Complete application settings."""
+
+    app:AppSettings=Field(default_factory=AppSettings)
+    database:DatabaseSettings=Field(default_factory=DatabaseSettings)
+    security:SecuritySettings=Field(default_factory=SecuritySettings)
+    email:EmailSettings=Field(default_factory=EmailSettings)
+
+    class Config:
+        env_file='.env'
+        env_file_encoding="utf-8"
+        env_nested_delimiter="__"
+
+
+@lru_cache()
+def get_settings()->Settings:
+    """
+    Get application settings instance.
+    Uses lru_cache to ensure configurations are loaded only once.
+
+    :return: Application settings instance.
+    """
+    return Settings()
+
+
+# Convenience accessors
+def get_app_settings()->AppSettings:
+    """Get application settings."""
+    return get_settings().app
+
+def get_database_settings()->DatabaseSettings:
+    """Get all database configurations."""
+    return get_settings().database
+
+def get_security_settings()->SecuritySettings:
+    """Get security configurations."""
+    return get_settings().security
+
+def get_email_settings()->EmailSettings:
+    """Get email settings."""
+    return get_settings().email
