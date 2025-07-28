@@ -28,7 +28,7 @@ dependencies=[
     "uvicorn[standard]>=0.24.0",
 
     # Database
-    "sqlalchemy[asyncio]>=2.0.23"
+    "sqlalchemy[asyncio]>=2.0.23",
     "alembic>=1.12.1",
     "aiosqlite>=0.19.0",    # SQLite async support
     "asyncpg>=0.29.0",      # PostgreSQLL async support
@@ -142,7 +142,7 @@ module="tests.*"
 disallow_untyped_defs=false
 
 [tool.pytest.ini_options]
-minversion="6.0",
+minversion="6.0"
 addopts="-ra -q --strict-markers --strict-config"
 testpaths=["tests"]
 pythonpath=["src"]
